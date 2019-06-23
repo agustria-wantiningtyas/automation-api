@@ -54,7 +54,8 @@ $router->group(['middleware' => 'CorsMiddleware'], function () use ($router) {
 
             // run test
             $router->post('/run-test/index', 'RunHistoryController@index');
-            $router->post('/run-test/excecute', 'RunHistoryController@store');
+            $router->post('/run-test/store', 'RunHistoryController@store');
+            $router->post('/run-test/execute', 'RunHistoryController@popen');
             $router->post('/report/index', 'RunHistoryController@report');
 
 
