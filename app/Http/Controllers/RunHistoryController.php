@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Helpers\Helper as Helper;
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\Employee;
-use App\Models\TestCase;
 use App\Models\RunHistory;
+use App\Models\TestCase;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class RunHistoryController extends Controller
@@ -25,7 +25,6 @@ class RunHistoryController extends Controller
                     $dataCount = 0;
                     $testcase = new RunHistory();
                     $getData = $testcase->getAllData($content);
-                    
 
                     if (!$getData['data']->isEmpty()) {
                         $dataCount = $getData['count'];
@@ -93,17 +92,35 @@ class RunHistoryController extends Controller
             if ($userActive) {
                 $user = User::userByToken($request->token);
                 if (!empty($user)) {
-                    $content = array(
-                        'test_case_id' => $request->test_case_id,
-                        'path_url' => ''
-                    );
-                    $result = RunHistory::store($content);
-                    if ($result) {
-                        $data = Helper::_success();
-                    } else {
-                        $data = Helper::_noContent();
+                    try {
+                        $tc = TestCase::show($request->test_case_id);
+                        if ($tc) {
+                            $rh = RunHistory::showIdLast();
+                            if (!empty($rh)) {
+                                $url = $tc->path_url . str_replace(' ', '_', strtolower($tc->name)) . '/report_' . ((int) $rh->id + 1) . '/report.html';
+                                // var_dump(json_encode($url, JSON_PRETTY_PRINT));exit;
+                                $content = array(
+                                    'test_case_id' => $tc->id,
+                                    'path_url' => $url,
+                                );
+                                $result = RunHistory::store($content);
+                                if ($result) {
+                                    $data = Helper::_success();
+                                    $data['id_history'] = $rh->id + 1;
+                                } else {
+                                    $data = Helper::_noContent();
+                                }
+                            } else {
+                                $data = Helper::_noContent();
+                            }
+                        } else {
+                            $data = Helper::_noContent();
+                        }
+                    } catch (\Throwable $th) {
+                        $data = Helper::_badRequest();
+
                     }
-                    
+
                 } else {
                     $data = Helper::_getDataIfSessionExpired();
                     $data['data'] = array();
@@ -116,6 +133,33 @@ class RunHistoryController extends Controller
         } else {
             $data = Helper::_methodNotAllowed();
             $data['error'] = 1;
+        }
+        return response()->json($data, 200);
+    }
+
+    public function popen(Request $request)
+    {
+        try {
+
+            $tc = TestCase::show($request->test_case_id);
+
+            if ($tc) {
+                $file_name = str_replace(' ', '_', strtolower($tc->name));
+                $report_directory = $tc->path_env . $file_name . '/report_' . $request->id_history;
+                $exe_directory = $tc->path_env . $file_name . '/' . $file_name . '.robot';
+                $command = 'robot -d ' . $report_directory . ' ' . $exe_directory;
+
+                if (pclose(popen($command, 'w'))) {
+                    return true;
+                }
+                return false;
+            } else {
+                $data = Helper::_noContent();
+            }
+
+        } catch (\Throwable $th) {
+            $data = Helper::_badRequest();
+
         }
         return response()->json($data, 200);
     }
@@ -163,7 +207,7 @@ class RunHistoryController extends Controller
                     $content = array(
                         'id' => $request->has('id') ? $request->id : '',
                         'name' => $request->name,
-                        'status' => $request->status
+                        'status' => $request->status,
                     );
                     $result = TestCase::edit($content);
                     if ($result) {
@@ -233,7 +277,7 @@ class RunHistoryController extends Controller
                 'name' => $value->name,
                 'path_url' => $value->path_url,
                 'status' => $value->status,
-                'created_at' => $value->created_at
+                'created_at' => $value->created_at,
             );
         }
         return $returnData;

@@ -68,6 +68,11 @@ class RunHistory extends Model
         return Self::where('id', $id)->first();
     }
 
+    public static function showIdLast()
+    {
+        return Self::orderByRaw("id DESC")->take(1)->first();
+    }
+
     public static function store($data)
     {
         return Self::insert($data);
