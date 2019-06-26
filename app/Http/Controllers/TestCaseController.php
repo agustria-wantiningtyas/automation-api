@@ -94,7 +94,8 @@ class TestCaseController extends Controller
                 if (!empty($user)) {
                     $content = array(
                         'name' => $request->test_case,
-                        'user_id' => $user->id
+                        'user_id' => $user->id,
+                        'created_at' => date('Y-m-d H:i:s')
                     );
                     $result = TestCase::store($content);
                     if ($result) {
@@ -256,6 +257,8 @@ class TestCaseController extends Controller
 
     public static function _setTestCaseData($data)
     {
+        date_default_timezone_set('Asia/Jakarta');
+
         foreach ($data as $value) {
             $returnData[] = array(
                 'id' => $value->id,

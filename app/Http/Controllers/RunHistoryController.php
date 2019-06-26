@@ -102,6 +102,8 @@ class RunHistoryController extends Controller
                                 $content = array(
                                     'test_case_id' => $tc->id,
                                     'path_url' => $url,
+                                    'created_at' => date('Y-m-d H:i:s')
+
                                 );
                                 $result = RunHistory::store($content);
                                 if ($result) {
@@ -271,13 +273,14 @@ class RunHistoryController extends Controller
 
     public static function _setTestCaseData($data)
     {
+        date_default_timezone_set('Asia/Jakarta');
         foreach ($data as $value) {
             $returnData[] = array(
                 'id' => $value->id,
                 'name' => $value->name,
                 'path_url' => $value->path_url,
                 'status' => $value->status,
-                'created_at' => $value->created_at,
+                'created_at' => $value->created_at
             );
         }
         return $returnData;
